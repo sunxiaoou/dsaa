@@ -1,0 +1,217 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "arrayque.h"
+
+#define MinArrayQSize 5
+
+int isEmptyArrayQ(ArrayQPtr Q)
+{
+	return Q->size == 0;
+}
+
+int isFullArrayQ(ArrayQPtr Q)
+{
+	return Q->size == Q->capacity;
+}
+
+int lengthArrayQ(ArrayQPtr Q)
+{
+	return Q->size;
+}
+
+void emptyArrayQ(ArrayQPtr Q)
+{
+	Q->size = 0;
+	Q->front = 1;
+	Q->rear = 0;
+}
+
+ArrayQPtr createArrayQ(int num)
+{
+	ArrayQPtr Q;
+
+	Q = malloc(sizeof(ArrayQue));
+	if (! Q) {
+		printf("malloc failed\n");
+		return NULL;
+	}
+
+	Q->capacity = MinArrayQSize < num ? num : MinArrayQSize;
+	Q->array = malloc(sizeof(QNode) * Q->capacity);
+	if(! Q->array) {
+		printf("malloc failed\n");
+		return NULL;
+	}
+	emptyArrayQ(Q);
+
+	return Q;
+}
+
+void destoryArrayQ(ArrayQPtr Q)
+{
+	if (Q) {
+		free(Q->array);
+		free(Q);
+	}
+}
+
+static int increase(int cap, int i)
+{
+	if (++ i == cap)
+		i = 0;
+	return i;
+}
+
+
+int enqArrayQ(ArrayQPtr Q, QNode x)
+{
+	if (isFullArrayQ(Q))
+		return -1;
+
+	Q->size ++;
+	Q->rear = increase(Q->capacity, Q->rear);
+	Q->array[Q->rear] = x;
+	return 0;	
+}
+
+void enq2ArrayQ(ArrayQPtr Q, QNode x)
+{
+	if (isFullArrayQ(Q)) {
+		Q->front = increase(Q->capacity, Q->front);
+	}
+	else
+		Q->size ++;
+
+	Q->rear = increase(Q->capacity, Q->rear);
+	Q->array[Q->rear] = x;
+}
+
+QNode peekArrayQ(ArrayQPtr Q)
+{
+	if (isEmptyArrayQ(Q))
+		return NULL;
+
+	return Q->array[Q->front];
+}
+
+QNode deqArrayQ(ArrayQPtr Q)
+{
+	QNode x;
+
+	if (isEmptyArrayQ(Q))
+		return NULL;
+
+	Q->size --;
+	x = Q->array[Q->front];
+	Q->front = increase(Q->capacity, Q->front);
+
+	return x;
+}
+
+#ifdef MYTEST
+void printArrayQ(ArrayQPtr Q)
+{
+	int i, j;
+	Element e;
+
+	if (isEmptyArrayQ(Q)) {
+		printf("Empty queue\n");
+		return;
+	}
+
+	for (i = 0, j = Q->front; i < lengthArrayQ(Q);
+	   	i ++, j = increase(Q->capacity, j))
+	{
+		e = Q->array[j];
+		printf("%d ", atoi(e->cid));
+	}
+
+	printf("\n");
+}
+
+int isInArrayQ(ArrayQPtr Q, int idx)
+{
+	if (isEmptyArrayQ(Q))
+		return 0;
+
+	if (Q->front <= Q->rear)
+		return idx >= Q->front && idx <= Q->rear;
+	else
+		return idx >= Q->front || idx <= Q->rear;
+}
+
+void dumpArrayQ(ArrayQPtr Q)
+{
+	int i;
+	Element e;
+
+	printf("F%dR%d\n", Q->front, Q->rear);
+	for (i = 0; i < Q->capacity; i ++) {
+		if (isInArrayQ(Q, i)) {
+			e = Q->array[i];
+			printf("%02d:%d ", i, atoi(e->cid));
+		}
+		else
+			printf("%02d:-1 ", i);
+	}
+	printf("\n");
+}
+
+Element create_elem(int i)
+{
+	Element e;
+
+	e = malloc(sizeof(ElemType));
+	sprintf(e->cid, "%08d", i);
+	sprintf(e->buf, "%08d", i);
+//	e->flg = rand() % 10 ? 0 : 1;
+	e->flg = i < 5 ? 1 : 0;
+
+	return e;
+}
+
+main()
+{
+	int i;
+	ArrayQPtr Q;
+	Element e;
+
+	Q = createArrayQ(12);
+
+	for( i = 0; i < 20; i++ )
+		enq2ArrayQ(Q, create_elem(i));
+
+	printArrayQ(Q);
+	dumpArrayQ(Q);
+
+	while(! isEmptyArrayQ(Q))
+	{
+		e = deqArrayQ(Q);
+		printf("%d\n", atoi(e->cid));
+	}
+
+	printArrayQ(Q);
+//	dumpArrayQ(Q);
+
+	for( i = 0; i < 10; i++ )
+		enqArrayQ(Q, create_elem(i));
+
+	printArrayQ(Q);
+//	dumpArrayQ(Q);
+
+	for (i = 0; i < lengthArrayQ(Q); i++) {
+		e = peekArrayQ(Q);
+		if (e->flg)
+			deqArrayQ(Q);
+		else 
+			break;
+	}
+
+	printArrayQ(Q);
+//	dumpArrayQ(Q);
+
+	destoryArrayQ( Q );
+	return 0;
+}
+#endif
